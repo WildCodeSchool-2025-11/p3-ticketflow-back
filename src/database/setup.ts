@@ -7,8 +7,9 @@ const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
 
 const action = process.argv[2];
 
+// Fonction utilitaire pour charger un fichier SQL
 const runSqlFile = async (connection: mysql.Connection, filename: string) => {
-	const filePath = path.join(import.meta.dirname, filename);
+	const filePath = path.join(__dirname, filename); // ✔️ Remplacement de import.meta.dirname
 	const sql = fs.readFileSync(filePath, "utf-8");
 
 	const statements = sql
