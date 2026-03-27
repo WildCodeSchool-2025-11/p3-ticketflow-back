@@ -1,9 +1,12 @@
 import path from "node:path";
 import type { Request, Response } from "express";
-import type { UploadedFile } from "express-fileupload";
+import type fileUpload from "express-fileupload"; // ✔️ import correct
 import type { RowDataPacket } from "mysql2";
 import db from "../../database/client.js";
 import attachmentsRepository from "./attachmentsRepository.js";
+
+// ✔️ on récupère le type UploadedFile depuis l'export par défaut
+type UploadedFile = ReturnType<typeof fileUpload>["UploadedFile"];
 
 export const create = async (req: Request, res: Response) => {
 	try {
