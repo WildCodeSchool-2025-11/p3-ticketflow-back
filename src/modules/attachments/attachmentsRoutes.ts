@@ -1,10 +1,10 @@
 import { Router } from "express";
-import attachmentsAction from "./attachmentsAction.js";
+import { create, destroy, findByTicketId } from "./attachmentsAction.js";
 
 const router = Router();
 
-router.post("/tickets/:id/attachments", attachmentsAction.create);
-router.get("/tickets/:id/attachments", attachmentsAction.findByTicketId);
-router.delete("/attachments/:id", attachmentsAction.destroy);
+router.post("/:id", create);
+router.get("/:id", findByTicketId);
+router.delete("/:id", destroy);
 
 export default router;

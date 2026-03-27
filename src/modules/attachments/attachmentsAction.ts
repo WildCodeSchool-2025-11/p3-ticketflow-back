@@ -1,21 +1,36 @@
+import path from "node:path";
 import type { Request, Response } from "express";
-import { findById } from "../tickets/ticketsRepository.js";
+import type { UploadedFile } from "express-fileupload";
+import type { RowDataPacket } from "mysql2";
+import db from "../../database/client.js";
 import attachmentsRepository from "./attachmentsRepository.js";
 
-const create = async (req: Request, res: Response) => {
+export const create = async (req: Request, res: Response) => {
 	try {
 		const ticketId = Number(req.params.id);
-		const { url, filename } = req.body;
 
-		if (!url || !filename) {
-			return res.status(400).json({ error: "Missing url or filename" });
-		}
+		const [rows] = await db.query<RowDataPacket[]>(
+			"SELECT id FROM tickets WHERE id = ?",
+			[ticketId],
+		);
+		const ticket = rows[0];
 
-		// Vérification : le ticket existe (findById attend un string)
-		const ticket = await findById(String(ticketId));
 		if (!ticket) {
 			return res.status(404).json({ error: "Ticket not found" });
 		}
+
+		if (!req.files || !req.files.file) {
+			return res.status(400).json({ error: "No file uploaded" });
+		}
+
+		const file = req.files.file as UploadedFile;
+
+		const filename = `${Date.now()}-${file.name}`;
+		const uploadPath = path.join("uploads", filename);
+
+		await file.mv(uploadPath);
+
+		const url = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
 
 		const id = await attachmentsRepository.create(url, filename, ticketId);
 
@@ -26,12 +41,10 @@ const create = async (req: Request, res: Response) => {
 	}
 };
 
-const findByTicketId = async (req: Request, res: Response) => {
+export const findByTicketId = async (req: Request, res: Response) => {
 	try {
 		const ticketId = Number(req.params.id);
-
 		const attachments = await attachmentsRepository.findByTicketId(ticketId);
-
 		return res.status(200).json(attachments);
 	} catch (error) {
 		console.error(error);
@@ -39,7 +52,7 @@ const findByTicketId = async (req: Request, res: Response) => {
 	}
 };
 
-const destroy = async (req: Request, res: Response) => {
+export const destroy = async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 
@@ -54,10 +67,4 @@ const destroy = async (req: Request, res: Response) => {
 		console.error(error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
-};
-
-export default {
-	create,
-	findByTicketId,
-	destroy,
 };
